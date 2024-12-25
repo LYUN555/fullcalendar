@@ -50,14 +50,23 @@
 							<label for="inputEmail" class="col-sm-4 col-form-label">일정종류</label>
 							<div class="col-sm-8 scheduleModalDiv">
 							<label for="meetingRadio">
-								<input class="form-check-input" type="radio" name="type" value="1" id="meetingRadio" checked> 회의
+								<input class="form-check-input" type="radio" name="type" value="1" id="meetingRadio" checked> 개인
 							</label>&nbsp;&nbsp;&nbsp;
 							<label for="festivalRadio">
-								<input class="form-check-input" type="radio" name="type" value="2" id="festivalRadio"> 행사
+								<input class="form-check-input" type="radio" name="type" value="2" id="festivalRadio"> 팀
 							</label>&nbsp;&nbsp;&nbsp;
-							<label for="inspectionRadio">
+							<div class="col-sm-8 scheduleModalDiv" id="teamMembersDiv" style="display: none;">
+							    <select class="form-control" id="teamMembers" name="teamMembers[]" multiple>
+							        <option value="member1">팀원 1</option>
+							        <option value="member2">팀원 2</option>
+							        <option value="member3">팀원 3</option>
+							        <option value="member4">팀원 4</option>
+							    </select>
+							    <small>Ctrl 또는 Shift 키를 사용하여 여러 명 선택 가능합니다.</small>
+							</div>
+							<!-- <label for="inspectionRadio">
 								<input class="form-check-input" type="radio" name="type" value="3" id="inspectionRadio"> 점검
-							</label>
+							</label>  -->
 							</div>
 							
 							<label for="inputEmail" class="col-sm-4 col-form-label">일정내용</label>
@@ -99,27 +108,26 @@ document.addEventListener('DOMContentLoaded', function() {
         locale: 'ko',
         selectable: true,
         dayMaxEvents: true,
-        events: function(info, successCallback, failureCallback) {
+        events: function(response, successCallback, failureCallback) { // 비동기 처리를 위해 콜백 함수 사용
             $.ajax({
                 url: "/scheduleCalList",
-                method: "GET",
-                success: function(response) {
-                	console.log(response)
-                    let events = response.map(schedule => ({
-                        title: schedule.scheduleTitle,
-                        start: schedule.startDate,
-                        end: schedule.endDate,
-                        backgroundColor: getScheduleColor(schedule.typeNo),
-                        borderColor: getScheduleColor(schedule.typeNo),
-                        url: `/scheduleDetail?scheduleNo=${schedule.scheduleNo}`,
-                        allDay: false
-                        		
-                    }));
-                    successCallback(events);
-                },
-                error: function() {
-                    failureCallback();
-                }
+                method: "GET"
+            })
+            .done((response) => {
+                console.log(response);
+                let events = response.map(schedule => ({
+                    title: schedule.scheduleTitle,
+                    start: schedule.startDate,
+                    end: schedule.endDate,
+                    backgroundColor: getScheduleColor(schedule.typeNo),
+                    borderColor: getScheduleColor(schedule.typeNo),
+                    url: `/calendarDetail?scheduleNo=${schedule.scheduleNo}`,
+                    allDay: false
+                }));
+                successCallback(events);
+            })
+            .fail(() => {
+                failureCallback();
             });
         }
     });
@@ -134,7 +142,27 @@ document.addEventListener('DOMContentLoaded', function() {
             default: return '#ffffff';
         }
     }
+    
+    
+    
+    const teamRadio = document.getElementById('festivalRadio');
+    const personalRadio = document.getElementById('meetingRadio');
+    const teamMembersDiv = document.getElementById('teamMembersDiv');
+
+    // 라디오 버튼 변경 이벤트 감지
+    document.querySelectorAll('input[name="type"]').forEach(radio => {
+        radio.addEventListener('change', function () {
+            if (teamRadio.checked) {
+                teamMembersDiv.style.display = 'block'; // 팀원 선택 표시
+            } else if (personalRadio.checked) {
+                teamMembersDiv.style.display = 'none'; // 팀원 선택 숨김
+            }
+        });
+    });
+    
 });
+
+
 </script>
 </head>
 </html>
